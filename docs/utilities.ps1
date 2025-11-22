@@ -1,12 +1,12 @@
 <#
 .SYNOPSIS
   Script de Instalación de Packs personalizado para entornos Enterprise.
-  Se auto-eleva a Administrador y se ejecuta en una nueva ventana con un estilo llamativo.
-.DESCRIPTION
-  Instala Google Chrome (Estándar Standalone) y Brave Browser de forma silenciosa.
+  Se auto-eleva a Administrador y se ejecuta en una nueva ventana con un estilo llamativo,
+  manteniendo la ventana abierta al finalizar el script.
 #>
 
 function Show-Menu {
+    # ... (Esta función permanece sin cambios) ...
     param(
         [Parameter(Mandatory=$true)]
         [Hashtable]$Applications
@@ -33,6 +33,7 @@ function Show-Menu {
 }
 
 function Invoke-SilentInstall {
+    # ... (Esta función permanece sin cambios) ...
     param(
         [Parameter(Mandatory=$true)]
         [string]$DownloadUrl,
@@ -41,11 +42,11 @@ function Invoke-SilentInstall {
         [Parameter(Mandatory=$true)]
         [string]$InstallerFileName,
         [Parameter(Mandatory=$true)]
-        [string]$InstallArguments # Solo argumentos silenciosos
+        [string]$InstallArguments
     )
 
     $DownloadPath = Join-Path -Path $env:TEMP -ChildPath $InstallerFileName
-    $ExecutablePath = $DownloadPath # Para EXE, el ejecutable es el archivo descargado
+    $ExecutablePath = $DownloadPath
     
     Write-Host " "
     Write-Host "✨ Procesando: $($FriendlyName)..." -ForegroundColor Cyan
@@ -63,13 +64,12 @@ function Invoke-SilentInstall {
     # 2. Ejecutar la instalación silenciosa
     Write-Host "   > Ejecutando instalador silencioso..." -ForegroundColor Gray
     try {
-        # Ejecutamos el archivo descargado ($ExecutablePath) con los argumentos silenciosos
         Start-Process -FilePath $ExecutablePath -ArgumentList $InstallArguments -Wait -NoNewWindow -ErrorAction Stop
         
         Write-Host "✅ $($FriendlyName) se instaló con ÉXITO." -ForegroundColor Green
     }
     catch {
-        Write-Host "⚠️ Fallo al ejecutar el instalador de $($FriendlyName). Requiere permisos de Administrador." -ForegroundColor Yellow
+        Write-Host "⚠️ Fallo al ejecutar el instalador de $($FriendlyName). Revisa los permisos o la ruta." -ForegroundColor Yellow
     }
     
     # 3. Limpieza: Eliminar el instalador
@@ -87,8 +87,9 @@ function Start-InstallerPacks {
         Write-Host "⚠️ Ejecutando elevación de permisos (RunAs)..." -ForegroundColor Yellow
         $scriptPath = $MyInvocation.MyCommand.Path
         
-        # Ejecutar el script en una nueva ventana de PowerShell como Administrador
-        Start-Process -FilePath 'powershell.exe' -ArgumentList "-File `"$scriptPath`" -elevated" -Verb RunAs
+        # 🟢 CORRECCIÓN APLICADA AQUÍ: Agregamos -NoExit
+        $CommandArgs = "-NoExit -File `"$scriptPath`" -elevated"
+        Start-Process -FilePath 'powershell.exe' -ArgumentList $CommandArgs -Verb RunAs
         exit
     }
     
@@ -103,19 +104,14 @@ function Start-InstallerPacks {
 
     # --- Definición de Aplicaciones ---
     $AppList = @{
-        # Google Chrome (Versión Estándar/Standalone)
         'https://dl.google.com/chrome/install/standalonesetup.exe' = @{
             Name='Google Chrome (Standard)'
             File='ChromeSetup.exe'
-            # Argumentos silenciosos comunes para el instalador EXE de Chrome
             Arguments='/silent /install' 
         }
-        
-        # Brave Browser (Instalador Standalone)
         'https://referrals.brave.com/latest/BraveBrowserSetup-Standalone.exe' = @{
             Name='Brave Browser'
             File='BraveBrowserSetup.exe'
-            # Argumentos silenciosos comunes para el instalador EXE de Brave
             Arguments='/silent /install' 
         }
     }
@@ -133,6 +129,7 @@ function Start-InstallerPacks {
             break
         }
         
+        # ... (Lógica de selección de aplicaciones) ...
         $AppsToInstallUrls = @()
         if ($Selection -eq 'A' -or $Selection -eq 'a') {
             $AppsToInstallUrls = $ApplicationUrls
